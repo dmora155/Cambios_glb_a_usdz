@@ -36,8 +36,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar modelo a centímetros correctamente
-                    scaleModelToRealSize(scene);
+                    // Escalar modelo a 7 cm correctamente
+                    scaleModelTo7cm(scene);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -64,12 +64,17 @@
             });
         }
 
-        function scaleModelToRealSize(model) {
+        function scaleModelTo7cm(model) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("Tamaño detectado del modelo (x, y, z):", size);
 
-            let scaleFactor = 1 / size.y * 7; // Escalar para que la altura sea de 7 cm
+            if (size.y === 0) {
+                console.warn("El tamaño Y del modelo es 0, no se puede escalar.");
+                return;
+            }
+
+            let scaleFactor = 7 / size.y; // Escalar para que la altura sea de 7 cm
 
             model.traverse((child) => {
                 if (child.isMesh) {
