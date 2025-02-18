@@ -36,7 +36,7 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar modelo a 7 cm correctamente
+                    // Escalar el modelo completo a 7 cm manteniendo su estructura
                     scaleModelTo7cm(scene);
 
                     // Exportar y descargar el USDZ
@@ -75,13 +75,7 @@
             }
 
             let scaleFactor = 7 / size.y; // Escalar para que la altura sea de 7 cm
-
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    child.geometry.applyMatrix4(new THREE.Matrix4().makeScale(scaleFactor, scaleFactor, scaleFactor));
-                    child.scale.set(1, 1, 1);
-                }
-            });
+            model.scale.set(scaleFactor, scaleFactor, scaleFactor); // Aplicar escala al modelo completo
             console.log(`Escala aplicada correctamente: ${scaleFactor}`);
         }
 
