@@ -77,6 +77,9 @@
             } else if (size.y > 100) {
                 console.log("El modelo está en CENTÍMETROS. Convertimos a metros.");
                 scaleFactor = 0.01; // De cm a metros
+            } else if (size.y > 10) {
+                console.log("El modelo está en DECÍMETROS. Convertimos a metros.");
+                scaleFactor = 0.1; // De dm a metros
             } else {
                 console.log("El modelo ya está en METROS.");
                 scaleFactor = 1; // Mantener igual
