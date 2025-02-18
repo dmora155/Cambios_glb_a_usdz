@@ -36,11 +36,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar el modelo completo a un tamaño realista (ejemplo: 10 cm)
-                    scaleModelToRealSize(scene, 10);
-
-                    // Centrar el modelo en el origen para evitar desplazamientos
-                    centerModel(scene);
+                    // Escalar el modelo completo a un tamaño realista (12-15 cm)
+                    scaleModelToRealSize(scene);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -67,7 +64,7 @@
             });
         }
 
-        function scaleModelToRealSize(model, targetHeightCm) {
+        function scaleModelToRealSize(model) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("Tamaño detectado del modelo (x, y, z):", size);
@@ -77,18 +74,11 @@
                 return;
             }
 
-            let scaleFactor = targetHeightCm / size.y; // Escalar para que la altura sea la deseada
+            const desiredHeight = 0.15; // 15 cm como altura realista del perfume
+            let scaleFactor = desiredHeight / size.y; // Escalar para que el perfume mida 15 cm
             model.scale.set(scaleFactor, scaleFactor, scaleFactor); // Aplicar escala al modelo completo
             model.updateMatrixWorld(true); // Asegurar que la escala se actualice correctamente
             console.log(`Escala aplicada correctamente: ${scaleFactor}`);
-        }
-
-        function centerModel(model) {
-            const boundingBox = new THREE.Box3().setFromObject(model);
-            const center = boundingBox.getCenter(new THREE.Vector3());
-            model.position.sub(center); // Mover el modelo al origen
-            model.updateMatrixWorld(true);
-            console.log("Modelo centrado en el origen.");
         }
 
         function exportUSDZ(model) {
