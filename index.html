@@ -36,7 +36,7 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar correctamente sin duplicar divisiones
+                    // Escalar correctamente con la lógica correcta
                     adjustModelScale(scene);
 
                     // Exportar y descargar el USDZ
@@ -76,13 +76,11 @@
 
             let scaleFactor = 1;
 
-            // Aplicar SOLO UNA división según la escala detectada
+            // Lógica correcta: si mide más de 1000 → ÷100, si mide más de 100 → ÷10
             if (size.y >= 1000) {
-                scaleFactor = 1 / 10;  // Convertir de mm a cm
+                scaleFactor = 1 / 100;  // Convertir de mm a cm
             } else if (size.y >= 100) {
-                scaleFactor = 1 / 100; // Convertir de cm a m
-            } else if (size.y >= 10) {
-                scaleFactor = 1 / 1000; // Convertir de m a cm
+                scaleFactor = 1 / 10;   // Convertir de cm a tamaño realista
             }
 
             if (scaleFactor !== 1) {
@@ -99,4 +97,35 @@
 
             const exporter = new THREE.USDZExporter();
             exporter.parse(model).then(function (arraybuffer) {
-                console.log("USDZ export
+                console.log("USDZ exportado correctamente.");
+
+                const blob = new Blob([arraybuffer], { type: "model/vnd.usdz+zip" });
+                const url = URL.createObjectURL(blob);
+
+                console.log("URL del archivo USDZ generado:", url);
+
+                const downloadLink = document.createElement("a");
+                downloadLink.href = url;
+                downloadLink.download = "modelo_convertido.usdz";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                alert("Modelo USDZ exportado y descargado correctamente.");
+            }).catch(function (error) {
+                console.error("Error al exportar a USDZ:", error);
+                alert("Error al convertir a USDZ. Revisa la consola.");
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Conversión de GLB a USDZ</h1>
+    <p>Selecciona un archivo GLB y haz clic en el botón para convertirlo a USDZ</p>
+
+    <div>
+        <input type="file" id="glb-file" accept=".glb">
+        <button onclick="convertToUSDZ()">Convertir a USDZ</button>
+    </div>
+</body>
+</html>
