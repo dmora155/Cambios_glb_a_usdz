@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <!-- Cargar dependencias necesarias -->
-    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.js"></script> <!-- Corrige error de fflate -->
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.js"></script>
 
     <!-- Cargar GLTFLoader y USDZExporter -->
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
@@ -36,11 +36,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar modelo a tamaño real
-                    const scaleFactor = scaleModelToRealSize(scene);
-
-                    // Aplicar la escala directamente a la geometría
-                    applyScaleToGeometry(scene, scaleFactor);
+                    // Escalar modelo a tamaño real dividiendo la escala
+                    scaleModelToRealSize(scene);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -85,17 +82,8 @@
                 scaleFactor = 1; // Mantener igual
             }
 
-            return scaleFactor;
-        }
-
-        function applyScaleToGeometry(model, scaleFactor) {
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    console.log(`Aplicando escala permanente a la geometría con factor: ${scaleFactor}`);
-                    child.geometry.applyMatrix4(new THREE.Matrix4().makeScale(scaleFactor, scaleFactor, scaleFactor));
-                    child.scale.set(1, 1, 1);
-                }
-            });
+            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            console.log(`Escala aplicada: ${scaleFactor}`);
         }
 
         function exportUSDZ(model) {
