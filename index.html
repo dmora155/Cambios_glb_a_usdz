@@ -36,7 +36,7 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar modelo a tamaño real dividiendo la escala
+                    // Escalar modelo a tamaño real en centímetros
                     scaleModelToRealSize(scene);
 
                     // Exportar y descargar el USDZ
@@ -72,17 +72,17 @@
             let scaleFactor = 1;
 
             if (size.y > 1000) {
-                console.log("El modelo está en MILÍMETROS. Convertimos a metros.");
-                scaleFactor = 0.001; // De mm a metros
+                console.log("El modelo está en MILÍMETROS. Convertimos a centímetros.");
+                scaleFactor = 0.1; // De mm a cm
             } else if (size.y > 100) {
-                console.log("El modelo está en CENTÍMETROS. Convertimos a metros.");
-                scaleFactor = 0.01; // De cm a metros
+                console.log("El modelo está en CENTÍMETROS. No se escala.");
+                scaleFactor = 1; // Ya está en cm
             } else if (size.y > 10) {
-                console.log("El modelo está en DECÍMETROS. Convertimos a metros.");
-                scaleFactor = 0.1; // De dm a metros
+                console.log("El modelo está en DECÍMETROS. Convertimos a centímetros.");
+                scaleFactor = 10; // De dm a cm
             } else {
-                console.log("El modelo ya está en METROS.");
-                scaleFactor = 1; // Mantener igual
+                console.log("El modelo está en METROS. Convertimos a centímetros.");
+                scaleFactor = 100; // De m a cm
             }
 
             model.scale.set(scaleFactor, scaleFactor, scaleFactor);
