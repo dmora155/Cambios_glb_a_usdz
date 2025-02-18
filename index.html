@@ -76,6 +76,7 @@
 
             let scaleFactor = 7 / size.y; // Escalar para que la altura sea de 7 cm
             model.scale.set(scaleFactor, scaleFactor, scaleFactor); // Aplicar escala al modelo completo
+            model.updateMatrixWorld(true); // Asegurar que la escala se actualice correctamente
             console.log(`Escala aplicada correctamente: ${scaleFactor}`);
         }
 
