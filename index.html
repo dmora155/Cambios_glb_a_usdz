@@ -36,8 +36,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Ajustar la escala del modelo a cm
-                    adjustModelScaleToCM(scene);
+                    // Ajustar la escala correctamente
+                    adjustModelScale(scene);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -64,7 +64,7 @@
             });
         }
 
-        function adjustModelScaleToCM(model) {
+        function adjustModelScale(model) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("Tamaño detectado del modelo (x, y, z):", size);
@@ -76,23 +76,23 @@
 
             let scaleFactor = 1;
 
-            // Si el modelo parece estar en metros (mayor a 1m), convertir a cm (100x)
-            if (size.y > 1) {
-                scaleFactor = 100;
+            // Si el modelo está en milímetros (mayor a 100 mm), lo dividimos por 10 para pasarlo a cm
+            if (size.y > 100) {
+                scaleFactor = 1 / 10;
             }
-            // Si el modelo parece estar en mm (menor a 1cm), convertir a cm (0.1x)
-            else if (size.y < 1 && size.y > 0.1) {
-                scaleFactor = 10;
+            // Si el modelo está en metros (mayor a 1.0 m), lo dividimos por 100 para pasarlo a cm
+            else if (size.y > 1) {
+                scaleFactor = 1 / 100;
             }
-            // Si ya está en cm (entre 1 cm y 1 m), no lo escalamos
-            else {
-                console.log("El modelo ya está en centímetros, no se escala.");
-                return;
-            }
+            // Si ya está en cm (entre 1 cm y 100 cm), no hacemos nada
 
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-            model.updateMatrixWorld(true);
-            console.log(`Escala aplicada: ${scaleFactor}x para ajustar a cm.`);
+            if (scaleFactor !== 1) {
+                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                model.updateMatrixWorld(true);
+                console.log(`Escala aplicada: ${scaleFactor}x para ajustar a cm.`);
+            } else {
+                console.log("El modelo ya tiene un tamaño realista en cm, no se escala.");
+            }
         }
 
         function exportUSDZ(model) {
