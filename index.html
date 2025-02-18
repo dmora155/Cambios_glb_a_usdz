@@ -36,7 +36,7 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar correctamente con la lógica correcta
+                    // Aplicar la corrección de escala
                     adjustModelScale(scene);
 
                     // Exportar y descargar el USDZ
@@ -76,11 +76,17 @@
 
             let scaleFactor = 1;
 
-            // Lógica correcta: si mide más de 1000 → ÷100, si mide más de 100 → ÷10
-            if (size.y >= 1000) {
-                scaleFactor = 1 / 100;  // Convertir de mm a cm
-            } else if (size.y >= 100) {
-                scaleFactor = 1 / 10;   // Convertir de cm a tamaño realista
+            // Si el modelo mide más de 1000 unidades, dividir entre 1000
+            if (size.y > 1000) {
+                scaleFactor = 1 / 1000;
+            }
+            // Si el modelo mide entre 100 y 1000 unidades, dividir entre 100
+            else if (size.y > 100) {
+                scaleFactor = 1 / 100;
+            }
+            // Si el modelo mide entre 10 y 100 unidades, dividir entre 10
+            else if (size.y > 10) {
+                scaleFactor = 1 / 10;
             }
 
             if (scaleFactor !== 1) {
