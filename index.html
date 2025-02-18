@@ -1,149 +1,121 @@
+
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experiencia AR en iOS y Android</title>
+    <title>Conversión de GLB a USDZ</title>
+
+    <!-- Cargar Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://threejs.org/examples/js/exporters/GLTFExporter.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            background-color: #f8f8f8;
-        }
 
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            background-color: #ffcc00;
-            color: black;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px;
-        }
+    <!-- Cargar dependencias necesarias -->
+    <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.js"></script>
 
-        button:hover {
-            background-color: #ffbb00;
-        }
-
-        #ar-container {
-            margin-top: 20px;
-        }
-
-        .object-selection {
-            margin: 20px 0;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>Experiencia AR en iOS y Android</h1>
-    <p>Selecciona un objeto para verlo en AR con la escala corregida.</p>
-
-    <div class="object-selection">
-        <button onclick="openAR('Perfume1')">ARREGLEN ESTE BOTÓNNNNN</button>
-        <button onclick="openAR('Perfume2')">Perfume</button>
-        <button onclick="openAR('star')">Estrella</button>
-    </div>
-
-    <div id="ar-container"></div>
+    <!-- Cargar GLTFLoader y USDZExporter -->
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/USDZExporter.js"></script>
 
     <script>
-        function getOS() {
-            const userAgent = navigator.userAgent || navigator.vendor;
-            if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-                return "iOS";
-            } else if (/android/i.test(userAgent)) {
-                return "Android";
-            } else {
-                return "No compatible";
+        function convertToUSDZ() {
+            const fileInput = document.getElementById('glb-file');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Por favor, selecciona un archivo GLB.");
+                return;
             }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                console.log("Archivo GLB cargado correctamente.");
+
+                const loader = new THREE.GLTFLoader();
+                loader.parse(event.target.result, '', function(gltf) {
+                    const scene = gltf.scene;
+                    console.log("GLB cargado en la escena.");
+
+                    ensureUVs(scene); // Generar UVs si faltan
+
+                    // Escalar el modelo completo a un tamaño realista (12-15 cm)
+                    scaleModelToRealSize(scene);
+
+                    // Exportar y descargar el USDZ
+                    exportUSDZ(scene);
+                }, function(error) {
+                    console.error("Error al cargar GLB:", error);
+                });
+            };
+
+            reader.readAsArrayBuffer(file);
         }
 
-        const os = getOS();
-        alert("Sistema detectado: " + os);
-
-        // Modelos con sus versiones GLB y USDZ
-        const objects = {
-            Perfume1: {
-                glb: "https://firebasestorage.googleapis.com/v0/b/vitrinea-4433b.appspot.com/o/vitrineaar%2F3D_Objects%2FPerfume%20glb.glb?alt=media&token=7b0d95dd-9f66-49ac-8c04-9321aeb1c56b",
-                usdz: "https://firebasestorage.googleapis.com/v0/b/vitrinea-4433b.appspot.com/o/vitrineaar%2F3D_Objects%2FPerfume%20usdz.usdz?alt=media&token=e8a35777-009d-4e17-9090-bf25d1e0296b"
-            },
-            Perfume2: {
-                glb: "https://firebasestorage.googleapis.com/v0/b/vitrinea-4433b.appspot.com/o/vitrineaar%2F3D_Objects%2FPerfume.glb?alt=media&token=b9cd307e-8ac6-46b5-9ab5-5ba597ea8d50",
-                usdz: "https://firebasestorage.googleapis.com/v0/b/vitrinea-4433b.appspot.com/o/vitrineaar%2F3D_Objects%2FPerfume%20usdz.usdz?alt=media&token=f82c0c30-2dd9-4f01-bdbb-7dca5c9fa0e4"
-            },
-            star: {
-                glb: "https://firebasestorage.googleapis.com/v0/b/vitrinea-4433b.appspot.com/o/vitrineaar%2F3D_Objects%2Fglb_1739799847176_1739799847176.glb?alt=media&token=32a96675-35c3-4a69-a506-d7436b1cd5b0",
-                usdz: "https://firebasestorage.googleapis.com/v0/b/vitrinea-4433b.appspot.com/o/vitrineaar%2F3D_Objects%2FSilla%20usdz.usdz?alt=media&token=60d0c240-ebaa-4913-b6e5-aa5bd216ea4f"
-            }
-        };
-
-        function openAR(objectKey) {
-            if (os === "iOS") {
-                openInQuickLook(objects[objectKey].usdz);
-            } else if (os === "Android") {
-                openInSceneViewer(objects[objectKey].glb, objectKey);
-            } else {
-                alert("Tu dispositivo no es compatible con AR.");
-            }
-        }
-
-        function openInSceneViewer(modelUrl, objectKey) {
-            alert("Abriendo modelo original en Scene Viewer...");
-            window.location.href = `https://arvr.google.com/scene-viewer/1.0?file=${modelUrl}&mode=ar_preferred`;
-
-            // Iniciar conversión de escala en segundo plano
-            detectAndConvertToMm(modelUrl, objectKey);
-        }
-
-        function detectAndConvertToMm(modelUrl, objectKey) {
-            const loader = new THREE.GLTFLoader();
-
-            loader.load(modelUrl, function (gltf) {
-                const model = gltf.scene;
-                const boundingBox = new THREE.Box3().setFromObject(model);
-                const size = boundingBox.getSize(new THREE.Vector3());
-
-                // Establecer una escala específica (ajústala según tus necesidades)
-                const targetHeight = 0.1; // 1 metro de altura
-                const scaleFactor = targetHeight / size.y; // Ajustar basado en la altura
-
-                model.scale.set(0.01, 0.01, 0.01);
-                alert(`Modelo ${objectKey} escalado a ${targetHeight} metros con factor ${scaleFactor}.`);
-ac
-                exportGLB(model, objectKey);
-            }, undefined, function (error) {
-                alert(`Error al cargar el modelo ${objectKey}: ${error}`);
+        function ensureUVs(model) {
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    if (!child.geometry.attributes.uv) {
+                        console.warn("El modelo no tiene coordenadas UV. Generando UVs básicas...");
+                        const uvAttribute = new Float32Array(child.geometry.attributes.position.count * 2);
+                        for (let i = 0; i < uvAttribute.length; i++) {
+                            uvAttribute[i] = (i % 2 === 0) ? 0 : 1; // UVs básicas
+                        }
+                        child.geometry.setAttribute('uv', new THREE.BufferAttribute(uvAttribute, 2));
+                    }
+                }
             });
         }
 
+        function scaleModelToRealSize(model) {
+            const boundingBox = new THREE.Box3().setFromObject(model);
+            const size = boundingBox.getSize(new THREE.Vector3());
+            console.log("Tamaño detectado del modelo (x, y, z):", size);
 
-        function exportGLB(model, objectKey) {
-            alert(`Exportando modelo ${objectKey} escalado...`);
-            const exporter = new THREE.GLTFExporter();
+            if (size.y === 0) {
+                console.warn("El tamaño Y del modelo es 0, no se puede escalar.");
+                return;
+            }
 
-            exporter.parse(model, function (gltf) {
-                const blob = new Blob([gltf], { type: "model/gltf-binary" });
-                const convertedGLB = URL.createObjectURL(blob);
-                alert(`Modelo ${objectKey} corregido en milímetros.`);
-
-                // Volver a abrir el modelo corregido en Scene Viewer
-                openInSceneViewer(convertedGLB, objectKey);
-            }, { binary: true });
+            const desiredHeight = 0.15; // 15 cm como altura realista del perfume
+            let scaleFactor = desiredHeight / size.y; // Escalar para que el perfume mida 15 cm
+            model.scale.set(scaleFactor, scaleFactor, scaleFactor); // Aplicar escala al modelo completo
+            model.updateMatrixWorld(true); // Asegurar que la escala se actualice correctamente
+            console.log(`Escala aplicada correctamente: ${scaleFactor}`);
         }
 
-        function openInQuickLook(usdzUrl) {
-            alert("Abriendo en Quick Look...");
-            window.location.href = `${usdzUrl}#allowsContentScaling=0&callToAction=Ver en AR`;
+        function exportUSDZ(model) {
+            console.log("Iniciando exportación a USDZ...");
+
+            const exporter = new THREE.USDZExporter();
+            exporter.parse(model).then(function (arraybuffer) {
+                console.log("USDZ exportado correctamente.");
+
+                const blob = new Blob([arraybuffer], { type: "model/vnd.usdz+zip" });
+                const url = URL.createObjectURL(blob);
+
+                console.log("URL del archivo USDZ generado:", url);
+
+                const downloadLink = document.createElement("a");
+                downloadLink.href = url;
+                downloadLink.download = "modelo_convertido.usdz";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                alert("Modelo USDZ exportado y descargado correctamente.");
+            }).catch(function (error) {
+                console.error("Error al exportar a USDZ:", error);
+                alert("Error al convertir a USDZ. Revisa la consola.");
+            });
         }
     </script>
-</body>
+</head>
+<body>
+    <h1>Conversión de GLB a USDZ</h1>
+    <p>Selecciona un archivo GLB y haz clic en el botón para convertirlo a USDZ</p>
 
+    <div>
+        <input type="file" id="glb-file" accept=".glb">
+        <button onclick="convertToUSDZ()">Convertir a USDZ</button>
+    </div>
+</body>
 </html>
