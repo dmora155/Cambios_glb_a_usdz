@@ -37,7 +37,10 @@
                     ensureUVs(scene); // Generar UVs si faltan
 
                     // Escalar modelo a tamaño real
-                    scaleModelToRealSize(scene);
+                    const scaleFactor = scaleModelToRealSize(scene);
+                    
+                    // Aplicar la escala directamente a la geometría
+                    applyScaleToGeometry(scene, scaleFactor);
 
                     exportUSDZ(scene);
                 }, function(error) {
@@ -81,8 +84,17 @@
                 scaleFactor = 1; // Mantener igual
             }
 
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-            console.log(`Escalado aplicado con factor: ${scaleFactor}`);
+            return scaleFactor;
+        }
+
+        function applyScaleToGeometry(model, scaleFactor) {
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    console.log(`Aplicando escala permanente a la geometría con factor: ${scaleFactor}`);
+                    child.geometry.applyMatrix4(new THREE.Matrix4().makeScale(scaleFactor, scaleFactor, scaleFactor));
+                    child.scale.set(1, 1, 1);
+                }
+            });
         }
 
         function exportUSDZ(model) {
