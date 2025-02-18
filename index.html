@@ -36,8 +36,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar el modelo completo a 7 cm manteniendo su estructura
-                    scaleModelTo7cm(scene);
+                    // Escalar el modelo completo a un tamaño realista (ejemplo: 10 cm)
+                    scaleModelToRealSize(scene, 10);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -64,7 +64,7 @@
             });
         }
 
-        function scaleModelTo7cm(model) {
+        function scaleModelToRealSize(model, targetHeightCm) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("Tamaño detectado del modelo (x, y, z):", size);
@@ -74,7 +74,7 @@
                 return;
             }
 
-            let scaleFactor = 7 / size.y; // Escalar para que la altura sea de 7 cm
+            let scaleFactor = targetHeightCm / size.y; // Escalar para que la altura sea la deseada
             model.scale.set(scaleFactor, scaleFactor, scaleFactor); // Aplicar escala al modelo completo
             model.updateMatrixWorld(true); // Asegurar que la escala se actualice correctamente
             console.log(`Escala aplicada correctamente: ${scaleFactor}`);
