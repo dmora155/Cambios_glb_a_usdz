@@ -36,7 +36,7 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Ajustar la escala usando la tabla del 10
+                    // Aplicar la tabla del 10 para escalar
                     adjustModelScale(scene);
 
                     // Exportar y descargar el USDZ
@@ -66,8 +66,8 @@
 
         function adjustModelScale(model) {
             const boundingBox = new THREE.Box3().setFromObject(model);
-            const size = boundingBox.getSize(new THREE.Vector3());
-            console.log("Tamaño detectado del modelo (x, y, z):", size);
+            let size = boundingBox.getSize(new THREE.Vector3());
+            console.log("📏 Tamaño antes de escalar (x, y, z):", size);
 
             if (size.y === 0) {
                 console.warn("El tamaño Y del modelo es 0, no se puede escalar.");
@@ -86,9 +86,20 @@
             }
 
             if (scaleFactor !== 1) {
+                // Reiniciar escala para evitar que haya una predefinida
+                model.scale.set(1, 1, 1);
+                model.updateMatrixWorld(true);
+
+                // Aplicar la nueva escala
                 model.scale.set(scaleFactor, scaleFactor, scaleFactor);
                 model.updateMatrixWorld(true);
-                console.log(`Escala aplicada: ${scaleFactor}x para ajustar correctamente.`);
+
+                // Volver a calcular el tamaño después de escalar
+                const newBoundingBox = new THREE.Box3().setFromObject(model);
+                let newSize = newBoundingBox.getSize(new THREE.Vector3());
+                console.log("📏 Tamaño después de escalar (x, y, z):", newSize);
+
+                console.log(`✅ Escala aplicada: ${scaleFactor}x para ajustar correctamente.`);
             } else {
                 console.log("El modelo ya tiene un tamaño realista en cm, no se escala.");
             }
