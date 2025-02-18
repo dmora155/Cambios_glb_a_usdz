@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -37,7 +36,7 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar el modelo completo a un tamaño realista (12-15 cm)
+                    // Escalar el modelo solo si es demasiado grande
                     scaleModelToRealSize(scene);
 
                     // Exportar y descargar el USDZ
@@ -75,11 +74,14 @@
                 return;
             }
 
-            const desiredHeight = 0.15; // 15 cm como altura realista del perfume
-            let scaleFactor = desiredHeight / size.y; // Escalar para que el perfume mida 15 cm
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor); // Aplicar escala al modelo completo
-            model.updateMatrixWorld(true); // Asegurar que la escala se actualice correctamente
-            console.log(`Escala aplicada correctamente: ${scaleFactor}`);
+            if (size.y > 0.5) { // Si el modelo es más grande que 50 cm, reducirlo
+                let scaleFactor = 0.15 / size.y; // Escalar para que sea 15 cm si es muy grande
+                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                model.updateMatrixWorld(true);
+                console.log(`Escalado para tamaño realista: ${scaleFactor}`);
+            } else {
+                console.log("El modelo ya tiene un tamaño adecuado, no se escala.");
+            }
         }
 
         function exportUSDZ(model) {
