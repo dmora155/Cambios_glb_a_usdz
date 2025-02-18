@@ -35,6 +35,7 @@
                     exportUSDZ(scene);
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
+                    alert("Error al cargar el modelo GLB. Revisa la consola.");
                 });
             };
             reader.readAsArrayBuffer(file);
@@ -55,24 +56,39 @@
 
             model.scale.set(scaleFactor, scaleFactor, scaleFactor);
             model.updateMatrixWorld(true);
+            console.log(`Escala aplicada: ${scaleFactor}`);
         }
 
         function exportUSDZ(model) {
-            const exporter = new THREE.USDZExporter();
-            exporter.parse(model).then(function(arraybuffer) {
-                const blob = new Blob([arraybuffer], { type: "model/vnd.usdz+zip" });
-                const url = URL.createObjectURL(blob);
-                const downloadLink = document.createElement("a");
-                downloadLink.href = url;
-                downloadLink.download = "modelo_convertido.usdz";
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                alert("Modelo USDZ exportado y descargado correctamente.");
-            }).catch(function(error) {
-                console.error("Error al exportar a USDZ:", error);
-                alert("Error al convertir a USDZ. Revisa la consola.");
-            });
+            console.log("Iniciando exportación a USDZ...");
+            try {
+                const exporter = new THREE.USDZExporter();
+                exporter.parse(model).then(function(arraybuffer) {
+                    if (!arraybuffer || arraybuffer.byteLength === 0) {
+                        console.error("Error: El archivo USDZ exportado está vacío.");
+                        alert("Error: La exportación USDZ falló. Revisa la consola.");
+                        return;
+                    }
+
+                    const blob = new Blob([arraybuffer], { type: "model/vnd.usdz+zip" });
+                    const url = URL.createObjectURL(blob);
+                    console.log("URL del archivo USDZ generado:", url);
+
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = url;
+                    downloadLink.download = "modelo_convertido.usdz";
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    alert("Modelo USDZ exportado y descargado correctamente.");
+                }).catch(function(error) {
+                    console.error("Error al exportar a USDZ:", error);
+                    alert("Error al convertir a USDZ. Revisa la consola.");
+                });
+            } catch (e) {
+                console.error("Error inesperado en la exportación:", e);
+                alert("Ocurrió un error inesperado. Revisa la consola.");
+            }
         }
     </script>
 </body>
