@@ -16,11 +16,10 @@
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/USDZExporter.js"></script>
 
     <script>
-        document.getElementById('glb-file').addEventListener('change', function(event) {
-            convertToUSDZ(event.target.files[0]);
-        });
+        function convertToUSDZ() {
+            const fileInput = document.getElementById('glb-file');
+            const file = fileInput.files[0];
 
-        function convertToUSDZ(file) {
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
                 return;
@@ -43,7 +42,7 @@
                     // Aplicar la escala directamente a la geometría
                     applyScaleToGeometry(scene, scaleFactor);
 
-                    // Exportar y descargar el USDZ automáticamente
+                    // Exportar y descargar el USDZ
                     exportUSDZ(scene);
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -128,10 +127,11 @@
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <p>Selecciona un archivo GLB y la conversión iniciará automáticamente</p>
+    <p>Selecciona un archivo GLB y haz clic en el botón para convertirlo a USDZ</p>
 
     <div>
         <input type="file" id="glb-file" accept=".glb">
+        <button onclick="convertToUSDZ()">Convertir a USDZ</button>
     </div>
 </body>
 </html>
