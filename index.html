@@ -71,13 +71,13 @@
 
             let scaleFactor = 1;
 
-            if (size.y > 700) {
+            if (size.y > 100) {
                 console.log("El modelo está en MILÍMETROS. Convertimos a centímetros.");
                 scaleFactor = 0.1; // De mm a cm
-            } else if (size.y > 70) {
+            } else if (size.y > 10) {
                 console.log("El modelo está en CENTÍMETROS. No se escala.");
                 scaleFactor = 1; // Ya está en cm
-            } else if (size.y > 7) {
+            } else if (size.y > 1) {
                 console.log("El modelo está en DECÍMETROS. Convertimos a centímetros.");
                 scaleFactor = 10; // De dm a cm
             } else {
@@ -85,12 +85,7 @@
                 scaleFactor = 100; // De m a cm
             }
 
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    child.geometry.applyMatrix4(new THREE.Matrix4().makeScale(scaleFactor, scaleFactor, scaleFactor));
-                    child.scale.set(1, 1, 1);
-                }
-            });
+            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
             console.log(`Escala aplicada correctamente: ${scaleFactor}`);
         }
 
