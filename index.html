@@ -69,21 +69,7 @@
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("Tamaño detectado del modelo (x, y, z):", size);
 
-            let scaleFactor = 1;
-
-            if (size.y > 700) {
-                console.log("El modelo está en MILÍMETROS. Convertimos a centímetros.");
-                scaleFactor = 0.1; // De mm a cm
-            } else if (size.y > 70) {
-                console.log("El modelo está en CENTÍMETROS. No se escala.");
-                scaleFactor = 1; // Ya está en cm
-            } else if (size.y > 7) {
-                console.log("El modelo está en DECÍMETROS. Convertimos a centímetros.");
-                scaleFactor = 10; // De dm a cm
-            } else {
-                console.log("El modelo está en METROS. Convertimos a centímetros.");
-                scaleFactor = 100; // De m a cm
-            }
+            let scaleFactor = 1 / size.y * 7; // Escalar para que la altura sea de 7 cm
 
             model.traverse((child) => {
                 if (child.isMesh) {
