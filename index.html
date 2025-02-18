@@ -36,7 +36,7 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Ajustar la escala correctamente
+                    // Escalar correctamente dividiendo más
                     adjustModelScale(scene);
 
                     // Exportar y descargar el USDZ
@@ -76,20 +76,23 @@
 
             let scaleFactor = 1;
 
-            // Si el modelo está en milímetros (mayor a 100 mm), lo dividimos por 10 para pasarlo a cm
-            if (size.y > 100) {
+            // Si el modelo está en milímetros (1000 mm o más), dividir por 10 para pasarlo a cm
+            if (size.y > 1000) {
                 scaleFactor = 1 / 10;
             }
-            // Si el modelo está en metros (mayor a 1.0 m), lo dividimos por 100 para pasarlo a cm
-            else if (size.y > 1) {
+            // Si el modelo está en metros (mayor a 1.0 m), dividir por 100 para pasarlo a cm
+            else if (size.y > 100) {
                 scaleFactor = 1 / 100;
             }
-            // Si ya está en cm (entre 1 cm y 100 cm), no hacemos nada
+            // Si sigue siendo demasiado grande, dividir por 1000
+            else if (size.y > 10) {
+                scaleFactor = 1 / 1000;
+            }
 
             if (scaleFactor !== 1) {
                 model.scale.set(scaleFactor, scaleFactor, scaleFactor);
                 model.updateMatrixWorld(true);
-                console.log(`Escala aplicada: ${scaleFactor}x para ajustar a cm.`);
+                console.log(`Escala aplicada: ${scaleFactor}x para ajustar correctamente.`);
             } else {
                 console.log("El modelo ya tiene un tamaño realista en cm, no se escala.");
             }
