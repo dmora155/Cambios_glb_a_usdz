@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -37,8 +36,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar el modelo completo a un tamaño realista (12-15 cm)
-                    scaleModelToRealSize(scene);
+                    // Normalizar la escala sin modificar el tamaño real
+                    normalizeModelScale(scene);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -65,7 +64,7 @@
             });
         }
 
-        function scaleModelToRealSize(model) {
+        function normalizeModelScale(model) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("Tamaño detectado del modelo (x, y, z):", size);
@@ -75,11 +74,18 @@
                 return;
             }
 
-            const desiredHeight = 0.15; // 15 cm como altura realista del perfume
-            let scaleFactor = desiredHeight / size.y; // Escalar para que el perfume mida 15 cm
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor); // Aplicar escala al modelo completo
+            // Normalizar la escala asegurando que los valores sean razonables
+            if (size.y > 10) {
+                let scaleFactor = 1 / 100; // Asumimos que el modelo está en milímetros y lo convertimos a metros
+                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                console.log(`Escala aplicada para convertir de mm a m: ${scaleFactor}`);
+            } else if (size.y > 1) {
+                let scaleFactor = 1 / 10; // Si está en cm, lo convertimos a metros
+                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                console.log(`Escala aplicada para convertir de cm a m: ${scaleFactor}`);
+            }
+
             model.updateMatrixWorld(true); // Asegurar que la escala se actualice correctamente
-            console.log(`Escala aplicada correctamente: ${scaleFactor}`);
         }
 
         function exportUSDZ(model) {
