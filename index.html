@@ -36,8 +36,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Normalizar la escala sin modificar el tamaño real
-                    normalizeModelScale(scene);
+                    // Ajustar la escala del modelo a cm
+                    adjustModelScaleToCM(scene);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -64,7 +64,7 @@
             });
         }
 
-        function normalizeModelScale(model) {
+        function adjustModelScaleToCM(model) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("Tamaño detectado del modelo (x, y, z):", size);
@@ -74,18 +74,25 @@
                 return;
             }
 
-            // Normalizar la escala asegurando que los valores sean razonables
-            if (size.y > 10) {
-                let scaleFactor = 1 / 100; // Asumimos que el modelo está en milímetros y lo convertimos a metros
-                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                console.log(`Escala aplicada para convertir de mm a m: ${scaleFactor}`);
-            } else if (size.y > 1) {
-                let scaleFactor = 1 / 10; // Si está en cm, lo convertimos a metros
-                model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                console.log(`Escala aplicada para convertir de cm a m: ${scaleFactor}`);
+            let scaleFactor = 1;
+
+            // Si el modelo parece estar en metros (mayor a 1m), convertir a cm (100x)
+            if (size.y > 1) {
+                scaleFactor = 100;
+            }
+            // Si el modelo parece estar en mm (menor a 1cm), convertir a cm (0.1x)
+            else if (size.y < 1 && size.y > 0.1) {
+                scaleFactor = 10;
+            }
+            // Si ya está en cm (entre 1 cm y 1 m), no lo escalamos
+            else {
+                console.log("El modelo ya está en centímetros, no se escala.");
+                return;
             }
 
-            model.updateMatrixWorld(true); // Asegurar que la escala se actualice correctamente
+            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            model.updateMatrixWorld(true);
+            console.log(`Escala aplicada: ${scaleFactor}x para ajustar a cm.`);
         }
 
         function exportUSDZ(model) {
