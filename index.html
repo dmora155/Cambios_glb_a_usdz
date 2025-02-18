@@ -68,8 +68,10 @@
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
+                alert("Modelo USDZ exportado y descargado correctamente.");
             }).catch(function(error) {
                 console.error("Error al exportar a USDZ:", error);
+                alert("Error al convertir a USDZ. Revisa la consola.");
             });
         }
     </script>
