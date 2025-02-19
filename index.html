@@ -20,9 +20,9 @@
             const fileInput = document.getElementById('glb-file');
             const file = fileInput.files[0];
 
-            let realWidth = parseFloat(document.getElementById('real-width').value);
-            let realHeight = parseFloat(document.getElementById('real-height').value);
-            let realDepth = parseFloat(document.getElementById('real-depth').value);
+            const realWidth = parseFloat(document.getElementById('real-width').value);
+            const realHeight = parseFloat(document.getElementById('real-height').value);
+            const realDepth = parseFloat(document.getElementById('real-depth').value);
 
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
@@ -33,11 +33,6 @@
                 alert("Por favor, ingresa valores reales en cm para cada eje.");
                 return;
             }
-
-            // 🔥 Convertir cm a metros 🔥
-            realWidth /= 10;
-            realHeight /= 10;
-            realDepth /= 10;
 
             const reader = new FileReader();
             reader.onload = function(event) {
@@ -55,7 +50,7 @@
                     console.log("GLB cargado en la escena.");
 
                     ensureUVs(scene);
-                    scaleToRealSize(scene, realWidth, realHeight, realDepth);
+                    adjustScale(scene, realWidth, realHeight, realDepth);
                     exportUSDZ(scene);
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -85,7 +80,7 @@
             });
         }
 
-        function scaleToRealSize(model, realWidth, realHeight, realDepth) {
+        function adjustScale(model, realWidth, realHeight, realDepth) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("📏 Tamaño detectado del modelo (X, Y, Z):", size);
@@ -95,13 +90,37 @@
                 return;
             }
 
-            const scaleX = realWidth / size.x;
-            const scaleY = realHeight / size.y;
-            const scaleZ = realDepth / size.z;
+            // 🔥 Detección automática de unidad 🔥
+            let scaleFactor = 1;
+            const maxDimension = Math.max(size.x, size.y, size.z);
+
+            if (maxDimension > 10000) {
+                scaleFactor = 0.0001; // Convertir mm a cm
+            } else if (maxDimension > 1000) {
+                scaleFactor = 0.001; // Convertir mm a metros
+            } else if (maxDimension > 100) {
+                scaleFactor = 0.01; // Convertir cm a metros
+            } else if (maxDimension < 1) {
+                scaleFactor = 100; // Convertir metros a cm
+            }
+
+            console.log(`🔄 Factor de escala detectado: ${scaleFactor}`);
+
+            // Aplicar factor de escala detectado
+            model.scale.multiplyScalar(scaleFactor);
+
+            // Obtener tamaño escalado
+            const newBoundingBox = new THREE.Box3().setFromObject(model);
+            const newSize = newBoundingBox.getSize(new THREE.Vector3());
+
+            // Aplicar la escala final para ajustar al tamaño ingresado por el usuario
+            const scaleX = realWidth / newSize.x;
+            const scaleY = realHeight / newSize.y;
+            const scaleZ = realDepth / newSize.z;
 
             model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
-            console.log(`✅ Escalado aplicado (X: ${scaleX}x, Y: ${scaleY}x, Z: ${scaleZ}x).`);
+            console.log(`✅ Escalado final aplicado (X: ${scaleX}x, Y: ${scaleY}x, Z: ${scaleZ}x).`);
         }
 
         function exportUSDZ(model) {
