@@ -37,80 +37,43 @@
 
             const reader = new FileReader();
             reader.onload = function(event) {
-                console.log("Archivo GLB cargado correctamente.");
+                console.log("📂 Archivo GLB cargado correctamente.");
 
                 if (!THREE.GLTFLoader) {
-                    console.error("Error: THREE.GLTFLoader no está disponible.");
+                    console.error("❌ Error: THREE.GLTFLoader no está disponible.");
                     alert("Error al cargar el modelo. Verifica la consola.");
                     return;
                 }
 
                 const loader = new THREE.GLTFLoader();
                 loader.parse(event.target.result, '', function(gltf) {
-                    const scene = gltf.scene;
-                    console.log("GLB cargado en la escena.");
+                    const originalScene = gltf.scene;
+                    console.log("✅ Modelo cargado en la escena.");
 
-                    ensureUVs(scene);
-                    fixMaterials(scene);
-                    scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
-
-                    // 🔥 Exportar primero el GLB escalado, luego convertirlo a USDZ
-                    exportGLB(scene, function() {
-                        exportUSDZ(scene);
+                    // Mantener el modelo original para USDZ
+                    const sceneForUSDZ = originalScene.clone();
+                    
+                    // Crear una copia para escalar y exportar a GLB
+                    const sceneForGLB = originalScene.clone();
+                    scaleToCorrectSize(sceneForGLB, realWidth, realHeight, realDepth);
+                    
+                    // 🔥 Exportar primero el GLB escalado
+                    exportGLB(sceneForGLB, function() {
+                        // 🔥 Luego exportar USDZ con el modelo original
+                        exportUSDZ(sceneForUSDZ);
                     });
 
                 }, function(error) {
-                    console.error("Error al cargar GLB:", error);
+                    console.error("❌ Error al cargar GLB:", error);
                 });
             };
 
             reader.onerror = function(error) {
-                console.error("Error al leer el archivo:", error);
+                console.error("❌ Error al leer el archivo:", error);
                 alert("Error al leer el archivo GLB.");
             };
 
             reader.readAsArrayBuffer(file);
-        }
-
-        function ensureUVs(model) {
-            model.traverse((child) => {
-                if (child.isMesh && child.geometry) {
-                    if (!child.geometry.attributes.uv) {
-                        console.warn("El modelo no tiene coordenadas UV. Generando UVs básicas...");
-                        const uvAttribute = new Float32Array(child.geometry.attributes.position.count * 2);
-                        for (let i = 0; i < uvAttribute.length; i++) {
-                            uvAttribute[i] = (i % 2 === 0) ? 0 : 1;
-                        }
-                        child.geometry.setAttribute('uv', new THREE.BufferAttribute(uvAttribute, 2));
-                    }
-                }
-            });
-        }
-
-        function fixMaterials(model) {
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    if (!child.material) {
-                        console.warn("🔴 Mesh sin material. Asignando material básico.");
-                        child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
-                    }
-
-                    if (child.material.extensions) {
-                        console.warn("🔴 Eliminando extensiones de material.");
-                        delete child.material.extensions;
-                    }
-
-                    if (child.material.map && (!child.material.map.image || child.material.map.image === undefined)) {
-                        console.warn("🔴 Textura no compatible. Reemplazando con color blanco.");
-                        child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
-                    }
-
-                    if (!(child.material instanceof THREE.MeshStandardMaterial)) {
-                        console.warn("🔴 Material no compatible. Reemplazando con MeshStandardMaterial.");
-                        child.material = new THREE.MeshStandardMaterial({ color: child.material.color || 0xffffff });
-                    }
-                }
-            });
         }
 
         function scaleToCorrectSize(model, realWidth, realHeight, realDepth) {
@@ -119,7 +82,7 @@
             console.log("📏 Tamaño detectado del modelo (X, Y, Z):", size);
 
             if (size.x === 0 || size.y === 0 || size.z === 0) {
-                console.warn("El tamaño de alguno de los ejes es 0, no se puede escalar.");
+                console.warn("⚠ El tamaño de alguno de los ejes es 0, no se puede escalar.");
                 return;
             }
 
@@ -133,7 +96,7 @@
             const scaleY = realHeight / size.y;
             const scaleZ = realDepth / size.z;
 
-            console.log(`🔄 Factores de escala finales: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
+            console.log(`✅ Factores de escala finales: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
 
             model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
@@ -151,12 +114,12 @@
 
         function exportUSDZ(model) {
             if (!THREE.USDZExporter) {
-                console.error("Error: THREE.USDZExporter no está disponible.");
+                console.error("❌ Error: THREE.USDZExporter no está disponible.");
                 alert("No se pudo exportar a USDZ. Revisa la consola.");
                 return;
             }
 
-            console.log("Iniciando exportación a USDZ...");
+            console.log("🚀 Iniciando exportación a USDZ...");
             const exporter = new THREE.USDZExporter();
 
             exporter.parse(model).then(function (arraybuffer) {
@@ -164,7 +127,7 @@
                 downloadFile(blob, "modelo_convertido.usdz");
                 console.log("✅ USDZ descargado.");
             }).catch(function (error) {
-                console.error("Error al exportar a USDZ:", error);
+                console.error("❌ Error al exportar a USDZ:", error);
                 alert("Error al convertir a USDZ. Revisa la consola.");
             });
         }
@@ -183,10 +146,14 @@
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <input type="file" id="glb-file" accept=".glb">
-    <input type="number" id="real-width" placeholder="Ancho (cm)">
-    <input type="number" id="real-height" placeholder="Alto (cm)">
-    <input type="number" id="real-depth" placeholder="Profundidad (cm)">
-    <button onclick="convertToUSDZ()">Convertir</button>
+    <p>Selecciona un archivo GLB, ingresa las dimensiones reales en cm y haz clic en el botón para convertirlo a USDZ</p>
+
+    <div>
+        <input type="file" id="glb-file" accept=".glb">
+        <input type="number" id="real-width" placeholder="Ancho (cm)">
+        <input type="number" id="real-height" placeholder="Alto (cm)">
+        <input type="number" id="real-depth" placeholder="Profundidad (cm)">
+        <button onclick="convertToUSDZ()">Convertir</button>
+    </div>
 </body>
 </html>
