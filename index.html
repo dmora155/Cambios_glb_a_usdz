@@ -50,16 +50,16 @@
                     const originalScene = gltf.scene;
                     console.log("✅ Modelo cargado en la escena.");
 
-                    // Mantener el modelo original para USDZ
+                    // Mantener el modelo original para USDZ sin cambios
                     const sceneForUSDZ = originalScene.clone();
-                    
-                    // Crear una copia para escalar y exportar a GLB
+
+                    // Crear una copia separada para escalar solo el GLB
                     const sceneForGLB = originalScene.clone();
                     scaleToCorrectSize(sceneForGLB, realWidth, realHeight, realDepth);
-                    
+
                     // 🔥 Exportar primero el GLB escalado
                     exportGLB(sceneForGLB, function() {
-                        // 🔥 Luego exportar USDZ con el modelo original
+                        // 🔥 Luego exportar USDZ con el modelo original (sin escalar)
                         exportUSDZ(sceneForUSDZ);
                     });
 
@@ -96,7 +96,7 @@
             const scaleY = realHeight / size.y;
             const scaleZ = realDepth / size.z;
 
-            console.log(`✅ Factores de escala finales: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
+            console.log(`✅ Factores de escala finales para GLB: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
 
             model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
