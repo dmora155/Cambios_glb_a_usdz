@@ -51,10 +51,10 @@
                     console.log("GLB cargado en la escena.");
 
                     ensureUVs(scene);
-                    fixMaterials(scene); // 🔥 Reparar materiales antes de exportar
+                    fixMaterials(scene);
                     scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
 
-                    // 🔥 Exportar el GLB escalado y luego convertirlo a USDZ
+                    // 🔥 Exportar primero el GLB escalado, luego convertirlo a USDZ
                     exportGLB(scene, function() {
                         exportUSDZ(scene);
                     });
@@ -95,19 +95,16 @@
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
                     }
 
-                    // 🔥 Eliminar extensiones de materiales problemáticas
                     if (child.material.extensions) {
                         console.warn("🔴 Eliminando extensiones de material.");
                         delete child.material.extensions;
                     }
 
-                    // 🔥 Reemplazar texturas problemáticas
                     if (child.material.map && (!child.material.map.image || child.material.map.image === undefined)) {
                         console.warn("🔴 Textura no compatible. Reemplazando con color blanco.");
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
                     }
 
-                    // 🔥 Asegurar que el material sea MeshStandardMaterial
                     if (!(child.material instanceof THREE.MeshStandardMaterial)) {
                         console.warn("🔴 Material no compatible. Reemplazando con MeshStandardMaterial.");
                         child.material = new THREE.MeshStandardMaterial({ color: child.material.color || 0xffffff });
@@ -187,6 +184,9 @@
 <body>
     <h1>Conversión de GLB a USDZ</h1>
     <input type="file" id="glb-file" accept=".glb">
+    <input type="number" id="real-width" placeholder="Ancho (cm)">
+    <input type="number" id="real-height" placeholder="Alto (cm)">
+    <input type="number" id="real-depth" placeholder="Profundidad (cm)">
     <button onclick="convertToUSDZ()">Convertir</button>
 </body>
 </html>
