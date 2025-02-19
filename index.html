@@ -18,18 +18,20 @@
     <script>
         function convertToUSDZ() {
             const fileInput = document.getElementById('glb-file');
-            const realHeightInput = document.getElementById('real-height').value;
             const file = fileInput.files[0];
+
+            const realWidth = parseFloat(document.getElementById('real-width').value);
+            const realHeight = parseFloat(document.getElementById('real-height').value);
+            const realDepth = parseFloat(document.getElementById('real-depth').value);
 
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
                 return;
             }
 
-            // Convertir la entrada del usuario a número
-            const realHeight = parseFloat(realHeightInput);
-            if (isNaN(realHeight) || realHeight <= 0) {
-                alert("Por favor, ingresa una altura válida en cm.");
+            // Validar que los valores ingresados sean correctos
+            if (isNaN(realWidth) || realWidth <= 0 || isNaN(realHeight) || realHeight <= 0 || isNaN(realDepth) || realDepth <= 0) {
+                alert("Por favor, ingresa valores reales en cm para cada eje.");
                 return;
             }
 
@@ -44,8 +46,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar el modelo según la altura ingresada
-                    scaleToRealSize(scene, realHeight);
+                    // Escalar el modelo según los valores ingresados
+                    scaleToRealSize(scene, realWidth, realHeight, realDepth);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -72,22 +74,24 @@
             });
         }
 
-        function scaleToRealSize(model, realHeight) {
+        function scaleToRealSize(model, realWidth, realHeight, realDepth) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("📏 Tamaño detectado del modelo (x, y, z):", size);
 
-            if (size.y === 0) {
-                console.warn("El tamaño Y del modelo es 0, no se puede escalar.");
+            if (size.x === 0 || size.y === 0 || size.z === 0) {
+                console.warn("El tamaño de alguno de los ejes es 0, no se puede escalar.");
                 return;
             }
 
-            // Cálculo del factor de escala basado en la altura real proporcionada
-            const scaleFactor = realHeight / size.y;
+            // Cálculo del factor de escala basado en las medidas reales proporcionadas
+            const scaleX = realWidth / size.x;
+            const scaleY = realHeight / size.y;
+            const scaleZ = realDepth / size.z;
 
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
-            console.log(`✅ Escalado a tamaño real: ${realHeight} cm (factor: ${scaleFactor}x).`);
+            console.log(`✅ Escalado aplicado (X: ${scaleX}x, Y: ${scaleY}x, Z: ${scaleZ}x).`);
         }
 
         function exportUSDZ(model) {
@@ -119,11 +123,13 @@
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <p>Selecciona un archivo GLB, ingresa la altura real en cm y haz clic en el botón para convertirlo a USDZ</p>
+    <p>Selecciona un archivo GLB, ingresa las dimensiones reales en cm y haz clic en el botón para convertirlo a USDZ</p>
 
     <div>
         <input type="file" id="glb-file" accept=".glb">
-        <input type="number" id="real-height" placeholder="Altura real en cm">
+        <input type="number" id="real-width" placeholder="Ancho real (X) en cm">
+        <input type="number" id="real-height" placeholder="Alto real (Y) en cm">
+        <input type="number" id="real-depth" placeholder="Profundidad real (Z) en cm">
         <button onclick="convertToUSDZ()">Convertir a USDZ</button>
     </div>
 </body>
