@@ -11,10 +11,10 @@
     <!-- Cargar dependencias necesarias -->
     <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.js"></script>
 
-    <!-- Cargar GLTFLoader y USDZExporter -->
+    <!-- Cargar GLTFLoader, GLTFExporter y USDZExporter -->
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/USDZExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/GLTFExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/USDZExporter.js"></script>
 
     <script>
         function convertToUSDZ() {
@@ -56,7 +56,7 @@
                     ensureUVs(scene);
                     scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
 
-                    // 🔥 Descargar el GLB ya escalado antes de la conversión a USDZ
+                    // 🔥 Descargar el GLB modificado con la escala correcta
                     exportGLB(scene);
 
                     // Convertir a USDZ
@@ -144,7 +144,7 @@
         function exportGLB(model) {
             const exporter = new THREE.GLTFExporter();
             exporter.parse(model, function (gltf) {
-                const blob = new Blob([JSON.stringify(gltf)], { type: "application/json" });
+                const blob = new Blob([gltf], { type: "model/gltf-binary" });
                 downloadFile(blob, "modelo_escalado.glb");
             }, { binary: true });
         }
