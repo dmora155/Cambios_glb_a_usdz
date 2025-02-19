@@ -53,9 +53,8 @@
                     ensureUVs(scene);
                     scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
 
-                    // 🔥 Descargar el GLB escalado antes de la conversión a USDZ
+                    // 🔥 Descargar el GLB escalado y luego convertir a USDZ
                     exportGLB(scene, function() {
-                        // 🔥 Convertir y descargar el USDZ después del GLB escalado
                         exportUSDZ(scene);
                     });
                 }, function(error) {
@@ -96,7 +95,6 @@
                 return;
             }
 
-            // Detectar la unidad y convertir si es necesario
             let scaleFactor = 1;
             if (size.x > 1000 || size.y > 1000 || size.z > 1000) {
                 scaleFactor = 0.001; // mm a metros
@@ -108,11 +106,9 @@
             model.scale.multiplyScalar(scaleFactor);
             model.updateMatrixWorld(true);
 
-            // Recalcular dimensiones después de la conversión
             const newBoundingBox = new THREE.Box3().setFromObject(model);
             size = newBoundingBox.getSize(new THREE.Vector3());
 
-            // Ajustar a las dimensiones ingresadas (en metros)
             realWidth /= 100;
             realHeight /= 100;
             realDepth /= 100;
@@ -130,8 +126,9 @@
         function exportGLB(model, callback) {
             const exporter = new THREE.GLTFExporter();
             exporter.parse(model, function (gltf) {
-                const blob = new Blob([gltf], { type: "model/gltf-binary" });
+                const blob = new Blob([gltf], { type: "application/octet-stream" });
                 downloadFile(blob, "modelo_escalado.glb");
+                console.log("✅ GLB escalado descargado.");
                 if (callback) callback();
             }, { binary: true });
         }
@@ -149,6 +146,7 @@
             exporter.parse(model).then(function (arraybuffer) {
                 const blob = new Blob([arraybuffer], { type: "model/vnd.usdz+zip" });
                 downloadFile(blob, "modelo_convertido.usdz");
+                console.log("✅ USDZ descargado.");
             }).catch(function (error) {
                 console.error("Error al exportar a USDZ:", error);
                 alert("Error al convertir a USDZ. Revisa la consola.");
