@@ -95,13 +95,11 @@
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
                     }
 
-                    // Si el material tiene extensiones que causan problemas, las eliminamos
                     if (child.material.extensions) {
                         console.warn("🔴 Eliminando extensiones de material problemáticas.");
                         delete child.material.extensions;
                     }
 
-                    // Si el material usa texturas pero no son compatibles, lo reemplazamos
                     if (child.material.map && !child.material.map.image) {
                         console.warn("🔴 Textura no compatible. Reemplazando con color blanco.");
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
@@ -120,23 +118,11 @@
                 return;
             }
 
-            let scaleFactor = 1;
-            if (size.x > 1000 || size.y > 1000 || size.z > 1000) {
-                scaleFactor = 0.001; // mm a metros
-            } else if (size.x > 100 || size.y > 100 || size.z > 100) {
-                scaleFactor = 0.01; // cm a metros
-            }
+            let scaleFactor = 0.01; // Convertir cm a metros
 
-            console.log(`📏 Factor de conversión detectado: ${scaleFactor}`);
-            model.scale.multiplyScalar(scaleFactor);
-            model.updateMatrixWorld(true);
-
-            const newBoundingBox = new THREE.Box3().setFromObject(model);
-            size = newBoundingBox.getSize(new THREE.Vector3());
-
-            realWidth /= 100;
-            realHeight /= 100;
-            realDepth /= 100;
+            realWidth *= scaleFactor;
+            realHeight *= scaleFactor;
+            realDepth *= scaleFactor;
 
             const scaleX = realWidth / size.x;
             const scaleY = realHeight / size.y;
@@ -192,7 +178,14 @@
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <input type="file" id="glb-file" accept=".glb">
-    <button onclick="convertToUSDZ()">Convertir</button>
+    <p>Selecciona un archivo GLB, ingresa las dimensiones reales en cm y haz clic en el botón para convertirlo a USDZ</p>
+
+    <div>
+        <input type="file" id="glb-file" accept=".glb">
+        <input type="number" id="real-width" placeholder="Ancho real (X) en cm">
+        <input type="number" id="real-height" placeholder="Alto real (Y) en cm">
+        <input type="number" id="real-depth" placeholder="Profundidad real (Z) en cm">
+        <button onclick="convertToUSDZ()">Convertir a USDZ</button>
+    </div>
 </body>
 </html>
