@@ -42,8 +42,10 @@
                     const scene = gltf.scene;
                     scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
 
-                    exportGLB(scene); // Descargar GLB con escala corregida
-                    exportUSDZ(scene); // Descargar USDZ
+                    exportGLB(scene).then(() => {
+                        exportUSDZ(scene); // Solo se exporta USDZ después de que el GLB se haya descargado
+                    });
+
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
                 });
@@ -76,6 +78,27 @@
             console.log("✅ Escala ajustada correctamente.");
         }
 
+        function exportGLB(model) {
+            return new Promise((resolve, reject) => {
+                const exporter = new THREE.GLTFExporter();
+
+                exporter.parse(model, function (gltf) {
+                    const glbBlob = new Blob([gltf], { type: "model/gltf-binary" });
+                    const glbUrl = URL.createObjectURL(glbBlob);
+
+                    const glbDownloadLink = document.createElement("a");
+                    glbDownloadLink.href = glbUrl;
+                    glbDownloadLink.download = "modelo_convertido.glb";
+                    document.body.appendChild(glbDownloadLink);
+                    glbDownloadLink.click();
+                    document.body.removeChild(glbDownloadLink);
+
+                    alert("✅ Modelo GLB exportado y descargado correctamente con la escala ajustada.");
+                    resolve(); // Se llama resolve() para continuar con el USDZ
+                }, { binary: true });
+            });
+        }
+
         function exportUSDZ(model) {
             const exporter = new THREE.USDZExporter();
             exporter.parse(model).then(function (arraybuffer) {
@@ -93,24 +116,6 @@
             }).catch(function (error) {
                 console.error("Error al exportar a USDZ:", error);
             });
-        }
-
-        function exportGLB(model) {
-            const exporter = new THREE.GLTFExporter();
-
-            exporter.parse(model, function (gltf) {
-                const glbBlob = new Blob([gltf], { type: "model/gltf-binary" });
-                const glbUrl = URL.createObjectURL(glbBlob);
-
-                const glbDownloadLink = document.createElement("a");
-                glbDownloadLink.href = glbUrl;
-                glbDownloadLink.download = "modelo_convertido.glb";
-                document.body.appendChild(glbDownloadLink);
-                glbDownloadLink.click();
-                document.body.removeChild(glbDownloadLink);
-
-                alert("✅ Modelo GLB exportado y descargado correctamente con la escala ajustada.");
-            }, { binary: true });
         }
     </script>
 </head>
