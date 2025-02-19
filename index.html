@@ -21,17 +21,8 @@
             const fileInput = document.getElementById('glb-file');
             const file = fileInput.files[0];
 
-            let realWidth = parseFloat(document.getElementById('real-width').value);
-            let realHeight = parseFloat(document.getElementById('real-height').value);
-            let realDepth = parseFloat(document.getElementById('real-depth').value);
-
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
-                return;
-            }
-
-            if (isNaN(realWidth) || realWidth <= 0 || isNaN(realHeight) || realHeight <= 0 || isNaN(realDepth) || realDepth <= 0) {
-                alert("Por favor, ingresa valores reales en cm para cada eje.");
                 return;
             }
 
@@ -40,10 +31,9 @@
                 const loader = new THREE.GLTFLoader();
                 loader.parse(event.target.result, '', function(gltf) {
                     const scene = gltf.scene;
-                    ensureUVs(scene);
-                    scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
+                    scaleModel(scene);
 
-                    exportGLB(scene); // Descargar GLB
+                    exportGLB(scene); // Descargar GLB con escala reducida
                     exportUSDZ(scene); // Descargar USDZ
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -53,46 +43,11 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function ensureUVs(model) {
-            model.traverse((child) => {
-                if (child.isMesh && child.geometry && !child.geometry.attributes.uv) {
-                    console.warn("Generando UVs básicas...");
-                    const uvAttribute = new Float32Array(child.geometry.attributes.position.count * 2);
-                    for (let i = 0; i < uvAttribute.length; i++) {
-                        uvAttribute[i] = (i % 2 === 0) ? 0 : 1;
-                    }
-                    child.geometry.setAttribute('uv', new THREE.BufferAttribute(uvAttribute, 2));
-                }
-            });
-        }
-
-        function scaleToCorrectSize(model, realWidth, realHeight, realDepth) {
-            const boundingBox = new THREE.Box3().setFromObject(model);
-            let size = boundingBox.getSize(new THREE.Vector3());
-
-            let scaleFactor = 1;
-            if (size.x > 1000 || size.y > 1000 || size.z > 1000) {
-                scaleFactor = 0.001;
-            } else if (size.x > 100 || size.y > 100 || size.z > 100) {
-                scaleFactor = 0.01;
-            }
-
-            model.scale.multiplyScalar(scaleFactor);
+        function scaleModel(model) {
+            console.log("📏 Reducción de escala iniciada...");
+            model.scale.multiplyScalar(0.01); // Reduce la escala 100 veces (de cm a metros)
             model.updateMatrixWorld(true);
-
-            const newBoundingBox = new THREE.Box3().setFromObject(model);
-            size = newBoundingBox.getSize(new THREE.Vector3());
-
-            realWidth /= 100;
-            realHeight /= 100;
-            realDepth /= 100;
-
-            const scaleX = realWidth / size.x;
-            const scaleY = realHeight / size.y;
-            const scaleZ = realDepth / size.z;
-
-            model.scale.set(scaleX, scaleY, scaleZ);
-            model.updateMatrixWorld(true);
+            console.log("✅ Modelo escalado correctamente.");
         }
 
         function exportUSDZ(model) {
@@ -117,16 +72,6 @@
         function exportGLB(model) {
             const exporter = new THREE.GLTFExporter();
 
-            // Verificar que todos los Mesh tengan materiales válidos
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    if (!child.material) {
-                        console.warn("⚠️ Un mesh no tiene material. Se asignará uno por defecto.");
-                        child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
-                    }
-                }
-            });
-
             exporter.parse(model, function (gltf) {
                 const glbBlob = new Blob([gltf], { type: "model/gltf-binary" });
                 const glbUrl = URL.createObjectURL(glbBlob);
@@ -138,20 +83,17 @@
                 glbDownloadLink.click();
                 document.body.removeChild(glbDownloadLink);
 
-                alert("✅ Modelo GLB exportado y descargado correctamente.");
+                alert("✅ Modelo GLB exportado y descargado correctamente con la escala reducida.");
             }, { binary: true });
         }
     </script>
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <p>Selecciona un archivo GLB, ingresa las dimensiones reales en cm y haz clic en el botón para convertirlo a USDZ y GLB.</p>
+    <p>Selecciona un archivo GLB y haz clic en el botón para convertirlo a USDZ y GLB con escala reducida.</p>
 
     <div>
         <input type="file" id="glb-file" accept=".glb">
-        <input type="number" id="real-width" placeholder="Ancho real (X) en cm">
-        <input type="number" id="real-height" placeholder="Alto real (Y) en cm">
-        <input type="number" id="real-depth" placeholder="Profundidad real (Z) en cm">
         <button onclick="convertAndDownload()">Convertir y Descargar</button>
     </div>
 </body>
