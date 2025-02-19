@@ -17,7 +17,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/GLTFExporter.js"></script>
 
     <script>
-        function convertAndDownload() {
+        async function convertAndDownload() {
             const fileInput = document.getElementById('glb-file');
             const file = fileInput.files[0];
 
@@ -36,15 +36,17 @@
             }
 
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = async function(event) {
                 const loader = new THREE.GLTFLoader();
-                loader.parse(event.target.result, '', function(gltf) {
+                loader.parse(event.target.result, '', async function(gltf) {
                     const scene = gltf.scene;
                     scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
 
-                    exportGLB(scene).then(() => {
-                        exportUSDZ(scene); // Solo se exporta USDZ después de que el GLB se haya descargado
-                    });
+                    // ✅ Primero descargar el GLB
+                    await exportGLB(scene);
+
+                    // ✅ Luego descargar el USDZ
+                    exportUSDZ(scene);
 
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -78,27 +80,6 @@
             console.log("✅ Escala ajustada correctamente.");
         }
 
-        function exportGLB(model) {
-            return new Promise((resolve, reject) => {
-                const exporter = new THREE.GLTFExporter();
-
-                exporter.parse(model, function (gltf) {
-                    const glbBlob = new Blob([gltf], { type: "model/gltf-binary" });
-                    const glbUrl = URL.createObjectURL(glbBlob);
-
-                    const glbDownloadLink = document.createElement("a");
-                    glbDownloadLink.href = glbUrl;
-                    glbDownloadLink.download = "modelo_convertido.glb";
-                    document.body.appendChild(glbDownloadLink);
-                    glbDownloadLink.click();
-                    document.body.removeChild(glbDownloadLink);
-
-                    alert("✅ Modelo GLB exportado y descargado correctamente con la escala ajustada.");
-                    resolve(); // Se llama resolve() para continuar con el USDZ
-                }, { binary: true });
-            });
-        }
-
         function exportUSDZ(model) {
             const exporter = new THREE.USDZExporter();
             exporter.parse(model).then(function (arraybuffer) {
@@ -115,6 +96,27 @@
                 alert("✅ Modelo USDZ exportado y descargado correctamente.");
             }).catch(function (error) {
                 console.error("Error al exportar a USDZ:", error);
+            });
+        }
+
+        function exportGLB(model) {
+            return new Promise((resolve, reject) => {
+                const exporter = new THREE.GLTFExporter();
+
+                exporter.parse(model, function (gltf) {
+                    const glbBlob = new Blob([gltf], { type: "model/gltf-binary" });
+                    const glbUrl = URL.createObjectURL(glbBlob);
+
+                    const glbDownloadLink = document.createElement("a");
+                    glbDownloadLink.href = glbUrl;
+                    glbDownloadLink.download = "modelo_convertido.glb";
+                    document.body.appendChild(glbDownloadLink);
+                    glbDownloadLink.click();
+                    document.body.removeChild(glbDownloadLink);
+
+                    alert("✅ Modelo GLB exportado y descargado correctamente con la escala ajustada.");
+                    resolve(); // Se llama resolve() para que el USDZ se descargue después
+                }, { binary: true });
             });
         }
     </script>
