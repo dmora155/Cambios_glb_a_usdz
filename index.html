@@ -84,21 +84,14 @@
                 return;
             }
 
-            // **Convertir unidades de metros a centímetros (Multiplicamos por 100)**
-            const modelWidthCM = size.x * 100;
-            const modelHeightCM = size.y * 100;
-            const modelDepthCM = size.z * 100;
-
-            console.log(`📏 Convertido a cm: X=${modelWidthCM}, Y=${modelHeightCM}, Z=${modelDepthCM}`);
-
-            // **Cálculo del factor de escala basado en cm**
-            const scaleX = realWidth / modelWidthCM;
-            const scaleY = realHeight / modelHeightCM;
-            const scaleZ = realDepth / modelDepthCM;
+            // Cálculo del factor de escala basado en las medidas reales proporcionadas
+            const scaleX = realWidth / size.x;
+            const scaleY = realHeight / size.y;
+            const scaleZ = realDepth / size.z;
 
             model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
-            console.log(`✅ Escalado aplicado (X: ${scaleX}x, Y: ${scaleY}x, Z: ${scaleZ}x).`);
+            console.log(✅ Escalado aplicado (X: ${scaleX}x, Y: ${scaleY}x, Z: ${scaleZ}x).);
         }
 
         function exportUSDZ(model) {
