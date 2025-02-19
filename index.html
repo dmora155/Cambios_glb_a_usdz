@@ -20,9 +20,9 @@
             const fileInput = document.getElementById('glb-file');
             const file = fileInput.files[0];
 
-            const realWidth = parseFloat(document.getElementById('real-width').value);
-            const realHeight = parseFloat(document.getElementById('real-height').value);
-            const realDepth = parseFloat(document.getElementById('real-depth').value);
+            let realWidth = parseFloat(document.getElementById('real-width').value);
+            let realHeight = parseFloat(document.getElementById('real-height').value);
+            let realDepth = parseFloat(document.getElementById('real-depth').value);
 
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
@@ -33,6 +33,11 @@
                 alert("Por favor, ingresa valores reales en cm para cada eje.");
                 return;
             }
+
+            // 🔥 Convertir cm a metros 🔥
+            realWidth /= 100;
+            realHeight /= 100;
+            realDepth /= 100;
 
             const reader = new FileReader();
             reader.onload = function(event) {
@@ -90,20 +95,18 @@
                 return;
             }
 
-            // 🔥 Escalar cada eje de manera proporcional 🔥
+            // 🔥 Escalar cada eje individualmente 🔥
             const scaleX = realWidth / size.x;
             const scaleY = realHeight / size.y;
             const scaleZ = realDepth / size.z;
 
-            // Calcular un factor de escala promedio para evitar deformaciones
-            const averageScale = (scaleX + scaleY + scaleZ) / 3;
-
             console.log(`🔄 Factores de escala: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
-            console.log(`✅ Factor de escala promedio aplicado: ${averageScale}`);
 
-            // Aplicar la misma escala en todos los ejes para mantener proporción
-            model.scale.set(averageScale, averageScale, averageScale);
+            // Aplicar la escala corregida
+            model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
+
+            console.log(`✅ Modelo escalado correctamente`);
         }
 
         function exportUSDZ(model) {
