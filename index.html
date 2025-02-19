@@ -95,14 +95,22 @@
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
                     }
 
+                    // 🔥 Eliminar extensiones de materiales problemáticas
                     if (child.material.extensions) {
-                        console.warn("🔴 Eliminando extensiones de material problemáticas.");
+                        console.warn("🔴 Eliminando extensiones de material.");
                         delete child.material.extensions;
                     }
 
-                    if (child.material.map && !child.material.map.image) {
+                    // 🔥 Reemplazar texturas problemáticas
+                    if (child.material.map && (!child.material.map.image || child.material.map.image === undefined)) {
                         console.warn("🔴 Textura no compatible. Reemplazando con color blanco.");
                         child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+                    }
+
+                    // 🔥 Asegurar que el material sea MeshStandardMaterial
+                    if (!(child.material instanceof THREE.MeshStandardMaterial)) {
+                        console.warn("🔴 Material no compatible. Reemplazando con MeshStandardMaterial.");
+                        child.material = new THREE.MeshStandardMaterial({ color: child.material.color || 0xffffff });
                     }
                 }
             });
@@ -178,14 +186,7 @@
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <p>Selecciona un archivo GLB, ingresa las dimensiones reales en cm y haz clic en el botón para convertirlo a USDZ</p>
-
-    <div>
-        <input type="file" id="glb-file" accept=".glb">
-        <input type="number" id="real-width" placeholder="Ancho real (X) en cm">
-        <input type="number" id="real-height" placeholder="Alto real (Y) en cm">
-        <input type="number" id="real-depth" placeholder="Profundidad real (Z) en cm">
-        <button onclick="convertToUSDZ()">Convertir a USDZ</button>
-    </div>
+    <input type="file" id="glb-file" accept=".glb">
+    <button onclick="convertToUSDZ()">Convertir</button>
 </body>
 </html>
