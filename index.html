@@ -34,11 +34,6 @@
                 return;
             }
 
-            // 🔥 Convertir cm a metros 🔥
-            realWidth /= 100;
-            realHeight /= 100;
-            realDepth /= 100;
-
             const reader = new FileReader();
             reader.onload = function(event) {
                 console.log("Archivo GLB cargado correctamente.");
@@ -55,7 +50,7 @@
                     console.log("GLB cargado en la escena.");
 
                     ensureUVs(scene);
-                    scaleToRealSize(scene, realWidth, realHeight, realDepth);
+                    scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
                     exportUSDZ(scene);
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -85,9 +80,9 @@
             });
         }
 
-        function scaleToRealSize(model, realWidth, realHeight, realDepth) {
+        function scaleToCorrectSize(model, realWidth, realHeight, realDepth) {
             const boundingBox = new THREE.Box3().setFromObject(model);
-            const size = boundingBox.getSize(new THREE.Vector3());
+            let size = boundingBox.getSize(new THREE.Vector3());
             console.log("📏 Tamaño detectado del modelo (X, Y, Z):", size);
 
             if (size.x === 0 || size.y === 0 || size.z === 0) {
@@ -95,12 +90,35 @@
                 return;
             }
 
-            // 🔥 Escalar cada eje individualmente 🔥
+            // 🔥 Detectar la unidad en la que está el modelo 🔥
+            let scaleFactor = 1;
+
+            if (size.x > 1000 || size.y > 1000 || size.z > 1000) {
+                scaleFactor = 0.001; // Convertir de mm a metros
+            } else if (size.x > 100 || size.y > 100 || size.z > 100) {
+                scaleFactor = 0.01; // Convertir de cm a metros
+            }
+
+            console.log(`📏 Factor de conversión detectado: ${scaleFactor}`);
+
+            // Aplicar conversión inicial
+            model.scale.multiplyScalar(scaleFactor);
+            model.updateMatrixWorld(true);
+
+            // Volver a calcular dimensiones con la escala corregida
+            const newBoundingBox = new THREE.Box3().setFromObject(model);
+            size = newBoundingBox.getSize(new THREE.Vector3());
+
+            // Escalar el modelo a las dimensiones ingresadas en cm (convertidos a metros)
+            realWidth /= 100;
+            realHeight /= 100;
+            realDepth /= 100;
+
             const scaleX = realWidth / size.x;
             const scaleY = realHeight / size.y;
             const scaleZ = realDepth / size.z;
 
-            console.log(`🔄 Factores de escala: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
+            console.log(`🔄 Factores de escala finales: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
 
             // Aplicar la escala corregida
             model.scale.set(scaleX, scaleY, scaleZ);
