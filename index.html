@@ -11,7 +11,7 @@
     <!-- Cargar dependencias necesarias -->
     <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.js"></script>
 
-    <!-- Cargar GLTFLoader y USDZExporter -->
+    <!-- Cargar GLTFLoader, USDZExporter y GLTFExporter -->
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/USDZExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/GLTFExporter.js"></script>
@@ -108,7 +108,7 @@
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
 
-                alert("Modelo USDZ exportado y descargado correctamente.");
+                alert("✅ Modelo USDZ exportado y descargado correctamente.");
             }).catch(function (error) {
                 console.error("Error al exportar a USDZ:", error);
             });
@@ -116,6 +116,17 @@
 
         function exportGLB(model) {
             const exporter = new THREE.GLTFExporter();
+
+            // Verificar que todos los Mesh tengan materiales válidos
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    if (!child.material) {
+                        console.warn("⚠️ Un mesh no tiene material. Se asignará uno por defecto.");
+                        child.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+                    }
+                }
+            });
+
             exporter.parse(model, function (gltf) {
                 const glbBlob = new Blob([gltf], { type: "model/gltf-binary" });
                 const glbUrl = URL.createObjectURL(glbBlob);
@@ -127,7 +138,7 @@
                 glbDownloadLink.click();
                 document.body.removeChild(glbDownloadLink);
 
-                alert("Modelo GLB exportado y descargado correctamente.");
+                alert("✅ Modelo GLB exportado y descargado correctamente.");
             }, { binary: true });
         }
     </script>
