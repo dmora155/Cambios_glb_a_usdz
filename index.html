@@ -20,9 +20,9 @@
             const fileInput = document.getElementById('glb-file');
             const file = fileInput.files[0];
 
-            const realWidth = parseFloat(document.getElementById('real-width').value);
-            const realHeight = parseFloat(document.getElementById('real-height').value);
-            const realDepth = parseFloat(document.getElementById('real-depth').value);
+            let realWidth = parseFloat(document.getElementById('real-width').value);
+            let realHeight = parseFloat(document.getElementById('real-height').value);
+            let realDepth = parseFloat(document.getElementById('real-depth').value);
 
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
@@ -33,6 +33,11 @@
                 alert("Por favor, ingresa valores reales en cm para cada eje.");
                 return;
             }
+
+            // Convertir cm a metros
+            realWidth /= 100;
+            realHeight /= 100;
+            realDepth /= 100;
 
             const reader = new FileReader();
             reader.onload = function(event) {
