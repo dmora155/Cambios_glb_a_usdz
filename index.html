@@ -50,7 +50,7 @@
                     console.log("GLB cargado en la escena.");
 
                     ensureUVs(scene);
-                    scaleToMatchLargestDimension(scene, realWidth, realHeight, realDepth);
+                    scaleToRealSize(scene, realWidth, realHeight, realDepth);
                     exportUSDZ(scene);
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -80,7 +80,7 @@
             });
         }
 
-        function scaleToMatchLargestDimension(model, realWidth, realHeight, realDepth) {
+        function scaleToRealSize(model, realWidth, realHeight, realDepth) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
             console.log("📏 Tamaño detectado del modelo (X, Y, Z):", size);
@@ -90,18 +90,20 @@
                 return;
             }
 
-            // 🔥 Nuevo método: Basar el escalado en el eje más grande 🔥
-            const modelLargest = Math.max(size.x, size.y, size.z);
-            const realLargest = Math.max(realWidth, realHeight, realDepth);
-            const scaleFactor = realLargest / modelLargest;
+            // 🔥 Escalar cada eje de manera proporcional 🔥
+            const scaleX = realWidth / size.x;
+            const scaleY = realHeight / size.y;
+            const scaleZ = realDepth / size.z;
 
-            console.log(`🔄 Escalando modelo por factor: ${scaleFactor}`);
+            // Calcular un factor de escala promedio para evitar deformaciones
+            const averageScale = (scaleX + scaleY + scaleZ) / 3;
 
-            // Aplicar la misma escala en todos los ejes para mantener la proporción
-            model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            console.log(`🔄 Factores de escala: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
+            console.log(`✅ Factor de escala promedio aplicado: ${averageScale}`);
+
+            // Aplicar la misma escala en todos los ejes para mantener proporción
+            model.scale.set(averageScale, averageScale, averageScale);
             model.updateMatrixWorld(true);
-
-            console.log(`✅ Escala aplicada correctamente: ${scaleFactor}`);
         }
 
         function exportUSDZ(model) {
