@@ -18,10 +18,18 @@
     <script>
         function convertToUSDZ() {
             const fileInput = document.getElementById('glb-file');
+            const realHeightInput = document.getElementById('real-height').value;
             const file = fileInput.files[0];
 
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
+                return;
+            }
+
+            // Convertir la entrada del usuario a número
+            const realHeight = parseFloat(realHeightInput);
+            if (isNaN(realHeight) || realHeight <= 0) {
+                alert("Por favor, ingresa una altura válida en cm.");
                 return;
             }
 
@@ -36,8 +44,8 @@
 
                     ensureUVs(scene); // Generar UVs si faltan
 
-                    // Escalar el modelo según sus dimensiones reales
-                    scaleToRealSize(scene, 7); // 7 cm de alto (según el diseñador)
+                    // Escalar el modelo según la altura ingresada
+                    scaleToRealSize(scene, realHeight);
 
                     // Exportar y descargar el USDZ
                     exportUSDZ(scene);
@@ -111,10 +119,11 @@
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <p>Selecciona un archivo GLB y haz clic en el botón para convertirlo a USDZ</p>
+    <p>Selecciona un archivo GLB, ingresa la altura real en cm y haz clic en el botón para convertirlo a USDZ</p>
 
     <div>
         <input type="file" id="glb-file" accept=".glb">
+        <input type="number" id="real-height" placeholder="Altura real en cm">
         <button onclick="convertToUSDZ()">Convertir a USDZ</button>
     </div>
 </body>
