@@ -29,7 +29,6 @@
                 return;
             }
 
-            // Validar que los valores ingresados sean correctos
             if (isNaN(realWidth) || realWidth <= 0 || isNaN(realHeight) || realHeight <= 0 || isNaN(realDepth) || realDepth <= 0) {
                 alert("Por favor, ingresa valores reales en cm para cada eje.");
                 return;
@@ -39,21 +38,28 @@
             reader.onload = function(event) {
                 console.log("Archivo GLB cargado correctamente.");
 
+                if (!THREE.GLTFLoader) {
+                    console.error("Error: THREE.GLTFLoader no está disponible.");
+                    alert("Error al cargar el modelo. Verifica la consola.");
+                    return;
+                }
+
                 const loader = new THREE.GLTFLoader();
                 loader.parse(event.target.result, '', function(gltf) {
                     const scene = gltf.scene;
                     console.log("GLB cargado en la escena.");
 
-                    ensureUVs(scene); // Generar UVs si faltan
-
-                    // Escalar el modelo según los valores ingresados
+                    ensureUVs(scene);
                     scaleToRealSize(scene, realWidth, realHeight, realDepth);
-
-                    // Exportar y descargar el USDZ
                     exportUSDZ(scene);
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
                 });
+            };
+
+            reader.onerror = function(error) {
+                console.error("Error al leer el archivo:", error);
+                alert("Error al leer el archivo GLB.");
             };
 
             reader.readAsArrayBuffer(file);
@@ -61,12 +67,12 @@
 
         function ensureUVs(model) {
             model.traverse((child) => {
-                if (child.isMesh) {
+                if (child.isMesh && child.geometry) {
                     if (!child.geometry.attributes.uv) {
                         console.warn("El modelo no tiene coordenadas UV. Generando UVs básicas...");
                         const uvAttribute = new Float32Array(child.geometry.attributes.position.count * 2);
                         for (let i = 0; i < uvAttribute.length; i++) {
-                            uvAttribute[i] = (i % 2 === 0) ? 0 : 1; // UVs básicas
+                            uvAttribute[i] = (i % 2 === 0) ? 0 : 1;
                         }
                         child.geometry.setAttribute('uv', new THREE.BufferAttribute(uvAttribute, 2));
                     }
@@ -77,27 +83,32 @@
         function scaleToRealSize(model, realWidth, realHeight, realDepth) {
             const boundingBox = new THREE.Box3().setFromObject(model);
             const size = boundingBox.getSize(new THREE.Vector3());
-            console.log("📏 Tamaño detectado del modelo (x, y, z):", size);
+            console.log("📏 Tamaño detectado del modelo (X, Y, Z):", size);
 
             if (size.x === 0 || size.y === 0 || size.z === 0) {
                 console.warn("El tamaño de alguno de los ejes es 0, no se puede escalar.");
                 return;
             }
 
-            // Cálculo del factor de escala basado en las medidas reales proporcionadas
             const scaleX = realWidth / size.x;
             const scaleY = realHeight / size.y;
             const scaleZ = realDepth / size.z;
 
             model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
-            console.log(✅ Escalado aplicado (X: ${scaleX}x, Y: ${scaleY}x, Z: ${scaleZ}x).);
+            console.log(`✅ Escalado aplicado (X: ${scaleX}x, Y: ${scaleY}x, Z: ${scaleZ}x).`);
         }
 
         function exportUSDZ(model) {
-            console.log("Iniciando exportación a USDZ...");
+            if (!THREE.USDZExporter) {
+                console.error("Error: THREE.USDZExporter no está disponible.");
+                alert("No se pudo exportar a USDZ. Revisa la consola.");
+                return;
+            }
 
+            console.log("Iniciando exportación a USDZ...");
             const exporter = new THREE.USDZExporter();
+
             exporter.parse(model).then(function (arraybuffer) {
                 console.log("USDZ exportado correctamente.");
 
