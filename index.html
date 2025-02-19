@@ -21,8 +21,17 @@
             const fileInput = document.getElementById('glb-file');
             const file = fileInput.files[0];
 
+            let realWidth = parseFloat(document.getElementById('real-width').value);
+            let realHeight = parseFloat(document.getElementById('real-height').value);
+            let realDepth = parseFloat(document.getElementById('real-depth').value);
+
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
+                return;
+            }
+
+            if (isNaN(realWidth) || realWidth <= 0 || isNaN(realHeight) || realHeight <= 0 || isNaN(realDepth) || realDepth <= 0) {
+                alert("Por favor, ingresa valores reales en cm para cada eje.");
                 return;
             }
 
@@ -31,9 +40,9 @@
                 const loader = new THREE.GLTFLoader();
                 loader.parse(event.target.result, '', function(gltf) {
                     const scene = gltf.scene;
-                    scaleModel(scene);
+                    scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
 
-                    exportGLB(scene); // Descargar GLB con escala reducida
+                    exportGLB(scene); // Descargar GLB con escala corregida
                     exportUSDZ(scene); // Descargar USDZ
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -43,11 +52,28 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function scaleModel(model) {
-            console.log("📏 Reducción de escala iniciada...");
-            model.scale.multiplyScalar(0.01); // Reduce la escala 100 veces (de cm a metros)
+        function scaleToCorrectSize(model, realWidth, realHeight, realDepth) {
+            console.log("📏 Ajustando la escala del modelo...");
+
+            const boundingBox = new THREE.Box3().setFromObject(model);
+            let size = boundingBox.getSize(new THREE.Vector3());
+
+            // Convertir valores ingresados en cm a metros
+            realWidth /= 100;
+            realHeight /= 100;
+            realDepth /= 100;
+
+            const scaleX = realWidth / size.x;
+            const scaleY = realHeight / size.y;
+            const scaleZ = realDepth / size.z;
+
+            console.log(`🔄 Factores de escala: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
+
+            // Aplicar la escala corregida
+            model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
-            console.log("✅ Modelo escalado correctamente.");
+
+            console.log("✅ Escala ajustada correctamente.");
         }
 
         function exportUSDZ(model) {
@@ -83,17 +109,20 @@
                 glbDownloadLink.click();
                 document.body.removeChild(glbDownloadLink);
 
-                alert("✅ Modelo GLB exportado y descargado correctamente con la escala reducida.");
+                alert("✅ Modelo GLB exportado y descargado correctamente con la escala ajustada.");
             }, { binary: true });
         }
     </script>
 </head>
 <body>
     <h1>Conversión de GLB a USDZ</h1>
-    <p>Selecciona un archivo GLB y haz clic en el botón para convertirlo a USDZ y GLB con escala reducida.</p>
+    <p>Selecciona un archivo GLB, ingresa las dimensiones reales en cm y haz clic en el botón para convertirlo a USDZ y GLB con escala ajustada.</p>
 
     <div>
         <input type="file" id="glb-file" accept=".glb">
+        <input type="number" id="real-width" placeholder="Ancho real (X) en cm">
+        <input type="number" id="real-height" placeholder="Alto real (Y) en cm">
+        <input type="number" id="real-depth" placeholder="Profundidad real (Z) en cm">
         <button onclick="convertAndDownload()">Convertir y Descargar</button>
     </div>
 </body>
