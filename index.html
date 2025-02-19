@@ -53,10 +53,11 @@
                     ensureUVs(scene);
                     scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
 
-                    // 🔥 Descargar el GLB escalado y luego convertir a USDZ
+                    // 🔥 Primero exportamos y descargamos el GLB escalado, luego convertimos a USDZ
                     exportGLB(scene, function() {
                         exportUSDZ(scene);
                     });
+
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
                 });
@@ -126,11 +127,11 @@
         function exportGLB(model, callback) {
             const exporter = new THREE.GLTFExporter();
             exporter.parse(model, function (gltf) {
-                const blob = new Blob([gltf], { type: "application/octet-stream" });
+                const blob = new Blob([JSON.stringify(gltf)], { type: "application/octet-stream" });
                 downloadFile(blob, "modelo_escalado.glb");
                 console.log("✅ GLB escalado descargado.");
                 if (callback) callback();
-            }, { binary: true });
+            }, { binary: false });
         }
 
         function exportUSDZ(model) {
