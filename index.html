@@ -14,6 +14,7 @@
     <!-- Cargar GLTFLoader y USDZExporter -->
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/USDZExporter.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/exporters/GLTFExporter.js"></script>
 
     <script>
         function convertToUSDZ() {
@@ -34,6 +35,9 @@
                 return;
             }
 
+            // 🔥 Descargar el GLB original antes de la conversión
+            downloadFile(file, "modelo_original.glb");
+
             const reader = new FileReader();
             reader.onload = function(event) {
                 console.log("Archivo GLB cargado correctamente.");
@@ -51,6 +55,11 @@
 
                     ensureUVs(scene);
                     scaleToCorrectSize(scene, realWidth, realHeight, realDepth);
+
+                    // 🔥 Descargar el GLB ya escalado antes de la conversión a USDZ
+                    exportGLB(scene);
+
+                    // Convertir a USDZ
                     exportUSDZ(scene);
                 }, function(error) {
                     console.error("Error al cargar GLB:", error);
@@ -63,6 +72,17 @@
             };
 
             reader.readAsArrayBuffer(file);
+        }
+
+        function downloadFile(blobData, filename) {
+            const url = URL.createObjectURL(blobData);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log(`📥 Archivo descargado: ${filename}`);
         }
 
         function ensureUVs(model) {
@@ -90,26 +110,23 @@
                 return;
             }
 
-            // 🔥 Detectar la unidad en la que está el modelo 🔥
+            // Detectar la unidad y convertir si es necesario
             let scaleFactor = 1;
-
             if (size.x > 1000 || size.y > 1000 || size.z > 1000) {
-                scaleFactor = 0.001; // Convertir de mm a metros
+                scaleFactor = 0.001; // mm a metros
             } else if (size.x > 100 || size.y > 100 || size.z > 100) {
-                scaleFactor = 0.01; // Convertir de cm a metros
+                scaleFactor = 0.01; // cm a metros
             }
 
             console.log(`📏 Factor de conversión detectado: ${scaleFactor}`);
-
-            // Aplicar conversión inicial
             model.scale.multiplyScalar(scaleFactor);
             model.updateMatrixWorld(true);
 
-            // Volver a calcular dimensiones con la escala corregida
+            // Recalcular dimensiones después de la conversión
             const newBoundingBox = new THREE.Box3().setFromObject(model);
             size = newBoundingBox.getSize(new THREE.Vector3());
 
-            // Escalar el modelo a las dimensiones ingresadas en cm (convertidos a metros)
+            // Ajustar a las dimensiones ingresadas (en metros)
             realWidth /= 100;
             realHeight /= 100;
             realDepth /= 100;
@@ -120,11 +137,16 @@
 
             console.log(`🔄 Factores de escala finales: X=${scaleX}, Y=${scaleY}, Z=${scaleZ}`);
 
-            // Aplicar la escala corregida
             model.scale.set(scaleX, scaleY, scaleZ);
             model.updateMatrixWorld(true);
+        }
 
-            console.log(`✅ Modelo escalado correctamente`);
+        function exportGLB(model) {
+            const exporter = new THREE.GLTFExporter();
+            exporter.parse(model, function (gltf) {
+                const blob = new Blob([JSON.stringify(gltf)], { type: "application/json" });
+                downloadFile(blob, "modelo_escalado.glb");
+            }, { binary: true });
         }
 
         function exportUSDZ(model) {
@@ -138,21 +160,8 @@
             const exporter = new THREE.USDZExporter();
 
             exporter.parse(model).then(function (arraybuffer) {
-                console.log("USDZ exportado correctamente.");
-
                 const blob = new Blob([arraybuffer], { type: "model/vnd.usdz+zip" });
-                const url = URL.createObjectURL(blob);
-
-                console.log("URL del archivo USDZ generado:", url);
-
-                const downloadLink = document.createElement("a");
-                downloadLink.href = url;
-                downloadLink.download = "modelo_convertido.usdz";
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                alert("Modelo USDZ exportado y descargado correctamente.");
+                downloadFile(blob, "modelo_convertido.usdz");
             }).catch(function (error) {
                 console.error("Error al exportar a USDZ:", error);
                 alert("Error al convertir a USDZ. Revisa la consola.");
