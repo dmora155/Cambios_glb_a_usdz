@@ -20,9 +20,9 @@
             const fileInput = document.getElementById('glb-file');
             const file = fileInput.files[0];
 
-            const realWidth = parseFloat(document.getElementById('real-width').value);
-            const realHeight = parseFloat(document.getElementById('real-height').value);
-            const realDepth = parseFloat(document.getElementById('real-depth').value);
+            const realWidth = parseFloat(document.getElementById('real-width').value)/10;
+            const realHeight = parseFloat(document.getElementById('real-height').value)/10;
+            const realDepth = parseFloat(document.getElementById('real-depth').value/10);
 
             if (!file) {
                 alert("Por favor, selecciona un archivo GLB.");
